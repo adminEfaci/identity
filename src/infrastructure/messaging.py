@@ -298,6 +298,200 @@ class CeleryMessageBus(MessageBus):
                     "error": str(e),
                 }
 
+        @self._celery_app.task(name="identity.notifications.process_notification_event")
+        def process_notification_event(
+            notification_data: dict[str, Any],
+            delay: Optional[int] = None,
+        ) -> dict[str, Any]:
+            """Process a notification event asynchronously.
+
+            Args:
+                notification_data: Serialized notification event data
+                delay: Optional delay in seconds before processing
+
+            Returns:
+                Processing result
+            """
+            try:
+                logger.info(f"Processing notification event: {notification_data.get('event_type')}")
+
+                # In a real implementation, this would:
+                # 1. Get the notification service from DI container
+                # 2. Reconstruct the notification event from notification_data
+                # 3. Process it through the notification handlers
+
+                # For now, we'll simulate notification processing
+                notification_id = notification_data.get("notification_id")
+                event_type = notification_data.get("event_type")
+                user_id = notification_data.get("user_id")
+
+                # Simulate sending through different channels
+                channels = notification_data.get("channels", [])
+                results = {}
+
+                for channel in channels:
+                    # Simulate channel-specific processing
+                    if channel == "email" or channel == "slack" or channel == "webhook":
+                        results[channel] = "sent"
+                    else:
+                        results[channel] = "unsupported"
+
+                return {
+                    "status": "success",
+                    "notification_id": notification_id,
+                    "event_type": event_type,
+                    "user_id": user_id,
+                    "channel_results": results,
+                    "processed_at": notification_data.get("occurred_at"),
+                }
+            except Exception as e:
+                logger.error(f"Failed to process notification event: {e}")
+                return {
+                    "status": "error",
+                    "error": str(e),
+                    "notification_id": notification_data.get("notification_id"),
+                }
+
+        @self._celery_app.task(name="identity.notifications.send_user_welcome_email")
+        def send_user_welcome_email(
+            user_id: str,
+            email: str,
+            first_name: str,
+            last_name: str,
+            username: str,
+            activation_link: Optional[str] = None,
+        ) -> dict[str, Any]:
+            """Send welcome email to new user.
+
+            Args:
+                user_id: User ID
+                email: User email address
+                first_name: User first name
+                last_name: User last name
+                username: Username
+                activation_link: Optional activation link
+
+            Returns:
+                Sending result
+            """
+            try:
+                logger.info(f"Sending welcome email to user {user_id} at {email}")
+
+                # In a real implementation, this would use the email notification handler
+                # For now, we'll simulate email sending
+
+                subject = f"Welcome to our platform, {first_name}!"
+                message = f"Hello {first_name} {last_name},\n\nWelcome! Your account has been created with username: {username}"
+
+                if activation_link:
+                    message += f"\n\nPlease activate your account: {activation_link}"
+
+                return {
+                    "status": "success",
+                    "user_id": user_id,
+                    "email": email,
+                    "subject": subject,
+                    "message_length": len(message),
+                }
+            except Exception as e:
+                logger.error(f"Failed to send welcome email to user {user_id}: {e}")
+                return {
+                    "status": "error",
+                    "error": str(e),
+                    "user_id": user_id,
+                    "email": email,
+                }
+
+        @self._celery_app.task(name="identity.notifications.send_password_change_alert")
+        def send_password_change_alert(
+            user_id: str,
+            email: str,
+            first_name: str,
+            last_name: str,
+            changed_by: str,
+            is_self_change: bool,
+            ip_address: Optional[str] = None,
+        ) -> dict[str, Any]:
+            """Send password change alert to user.
+
+            Args:
+                user_id: User ID
+                email: User email address
+                first_name: User first name
+                last_name: User last name
+                changed_by: Who changed the password
+                is_self_change: Whether user changed their own password
+                ip_address: IP address of the change
+
+            Returns:
+                Sending result
+            """
+            try:
+                logger.info(f"Sending password change alert to user {user_id} at {email}")
+
+                subject = "Your password has been changed"
+                message = f"Hello {first_name} {last_name},\n\nYour password has been changed by: {changed_by}"
+
+                if not is_self_change:
+                    message += "\n\nIf you did not make this change, please contact support immediately."
+
+                if ip_address:
+                    message += f"\n\nIP Address: {ip_address}"
+
+                return {
+                    "status": "success",
+                    "user_id": user_id,
+                    "email": email,
+                    "subject": subject,
+                    "is_security_alert": True,
+                }
+            except Exception as e:
+                logger.error(f"Failed to send password change alert to user {user_id}: {e}")
+                return {
+                    "status": "error",
+                    "error": str(e),
+                    "user_id": user_id,
+                    "email": email,
+                }
+
+        @self._celery_app.task(name="identity.notifications.batch_process_notifications")
+        def batch_process_notifications(
+            notification_batch: list[dict[str, Any]],
+        ) -> dict[str, Any]:
+            """Process multiple notifications in batch.
+
+            Args:
+                notification_batch: List of notification events to process
+
+            Returns:
+                Batch processing result
+            """
+            try:
+                logger.info(f"Processing batch of {len(notification_batch)} notifications")
+
+                results = []
+                for notification_data in notification_batch:
+                    # Process each notification in the batch
+                    result = process_notification_event(notification_data)
+                    results.append(result)
+
+                success_count = sum(1 for r in results if r.get("status") == "success")
+
+                return {
+                    "status": "success",
+                    "batch_size": len(notification_batch),
+                    "successful_count": success_count,
+                    "failed_count": len(notification_batch) - success_count,
+                    "results": results,
+                }
+            except Exception as e:
+                logger.error(f"Failed to process notification batch: {e}")
+                return {
+                    "status": "error",
+                    "error": str(e),
+                    "batch_size": len(notification_batch),
+                }
+
         @self._celery_app.task(name="identity.audit.process_domain_event")
         def process_audit_domain_event(
             event_data: dict[str, Any],
@@ -898,6 +1092,110 @@ class CeleryMessageBus(MessageBus):
         """
         return await self.schedule_task(
             "identity.audit.cleanup_expired_events",
+            countdown=delay,
+        )
+
+    # Notification event operations
+
+    async def publish_notification_event(
+        self,
+        notification_data: dict[str, Any],
+        delay: Optional[int] = None,
+    ) -> Optional[str]:
+        """Publish notification event for processing.
+
+        Args:
+            notification_data: Serialized notification event data
+            delay: Optional delay in seconds before processing
+
+        Returns:
+            Task ID if scheduled successfully, None otherwise
+        """
+        return await self.schedule_task(
+            "identity.notifications.process_notification_event",
+            args=(notification_data, delay),
+            countdown=delay,
+        )
+
+    async def send_user_welcome_email(
+        self,
+        user_id: str,
+        email: str,
+        first_name: str,
+        last_name: str,
+        username: str,
+        activation_link: Optional[str] = None,
+        delay: Optional[int] = None,
+    ) -> Optional[str]:
+        """Send welcome email to new user.
+
+        Args:
+            user_id: User ID
+            email: User email address
+            first_name: User first name
+            last_name: User last name
+            username: Username
+            activation_link: Optional activation link
+            delay: Optional delay in seconds
+
+        Returns:
+            Task ID if scheduled successfully, None otherwise
+        """
+        return await self.schedule_task(
+            "identity.notifications.send_user_welcome_email",
+            args=(user_id, email, first_name, last_name, username, activation_link),
+            countdown=delay,
+        )
+
+    async def send_password_change_alert(
+        self,
+        user_id: str,
+        email: str,
+        first_name: str,
+        last_name: str,
+        changed_by: str,
+        is_self_change: bool,
+        ip_address: Optional[str] = None,
+        delay: Optional[int] = None,
+    ) -> Optional[str]:
+        """Send password change alert to user.
+
+        Args:
+            user_id: User ID
+            email: User email address
+            first_name: User first name
+            last_name: User last name
+            changed_by: Who changed the password
+            is_self_change: Whether user changed their own password
+            ip_address: IP address of the change
+            delay: Optional delay in seconds
+
+        Returns:
+            Task ID if scheduled successfully, None otherwise
+        """
+        return await self.schedule_task(
+            "identity.notifications.send_password_change_alert",
+            args=(user_id, email, first_name, last_name, changed_by, is_self_change, ip_address),
+            countdown=delay,
+        )
+
+    async def batch_process_notifications(
+        self,
+        notification_batch: list[dict[str, Any]],
+        delay: Optional[int] = None,
+    ) -> Optional[str]:
+        """Process multiple notifications in batch.
+
+        Args:
+            notification_batch: List of notification events to process
+            delay: Optional delay in seconds
+
+        Returns:
+            Task ID if scheduled successfully, None otherwise
+        """
+        return await self.schedule_task(
+            "identity.notifications.batch_process_notifications",
+            args=(notification_batch,),
             countdown=delay,
         )
 

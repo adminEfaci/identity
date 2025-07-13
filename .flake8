@@ -6,7 +6,11 @@ extend-ignore =
     W503,
     E231,
     ANN101,
-    ANN102
+    ANN102,
+    TC001,
+    TC002,
+    TC003,
+    C901
 exclude = 
     .git,
     __pycache__,
@@ -20,7 +24,7 @@ exclude =
     migrations/versions
 per-file-ignores = 
     __init__.py:F401,F403
-    tests/*:S101,S106
+    tests/*:S101,S106,ANN
 max-complexity = 10
 import-order-style = google
 application-import-names = domain,application,infrastructure

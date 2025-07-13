@@ -5,13 +5,18 @@ within the Identity domain. Events follow the DDD pattern and can be used
 for event sourcing, integration with other bounded contexts, and audit trails.
 """
 
+from __future__ import annotations
+
 from dataclasses import dataclass, field
 from datetime import datetime
-from typing import Any, Optional
-from uuid import UUID
+from typing import TYPE_CHECKING, Any
+
+if TYPE_CHECKING:
+    from uuid import UUID
+
+    from .value_objects import Email, RoleId, UserId
 
 from .enums import UserStatus
-from .value_objects import Email, RoleId, UserId
 
 
 @dataclass(frozen=True)
@@ -30,8 +35,8 @@ class UserCreated:
     status: UserStatus = field()
     created_by: UUID = field()
     event_version: int = field(default=1)
-    correlation_id: Optional[UUID] = field(default=None)
-    causation_id: Optional[UUID] = field(default=None)
+    correlation_id: UUID | None = field(default=None)
+    causation_id: UUID | None = field(default=None)
     initial_roles: frozenset[RoleId] = field(default_factory=frozenset)
 
     def __post_init__(self) -> None:
@@ -84,8 +89,8 @@ class UserModified:
     modified_by: UUID = field()
     changes: dict[str, Any] = field()
     event_version: int = field(default=1)
-    correlation_id: Optional[UUID] = field(default=None)
-    causation_id: Optional[UUID] = field(default=None)
+    correlation_id: UUID | None = field(default=None)
+    causation_id: UUID | None = field(default=None)
     previous_values: dict[str, Any] = field(default_factory=dict)
 
     def __post_init__(self) -> None:
@@ -153,10 +158,10 @@ class UserDeleted:
     deleted_by: UUID = field()
     email: Email = field()
     event_version: int = field(default=1)
-    correlation_id: Optional[UUID] = field(default=None)
-    causation_id: Optional[UUID] = field(default=None)
+    correlation_id: UUID | None = field(default=None)
+    causation_id: UUID | None = field(default=None)
     soft_delete: bool = field(default=True)
-    deletion_reason: Optional[str] = field(default=None)
+    deletion_reason: str | None = field(default=None)
 
     def __post_init__(self) -> None:
         """Validate user deleted event."""
@@ -208,9 +213,9 @@ class UserRoleAssigned:
     role_id: RoleId = field()
     assigned_by: UUID = field()
     event_version: int = field(default=1)
-    correlation_id: Optional[UUID] = field(default=None)
-    causation_id: Optional[UUID] = field(default=None)
-    assignment_context: Optional[str] = field(default=None)
+    correlation_id: UUID | None = field(default=None)
+    causation_id: UUID | None = field(default=None)
+    assignment_context: str | None = field(default=None)
 
     def __post_init__(self) -> None:
         """Validate user role assigned event."""
@@ -261,9 +266,9 @@ class UserRoleRemoved:
     role_id: RoleId = field()
     removed_by: UUID = field()
     event_version: int = field(default=1)
-    correlation_id: Optional[UUID] = field(default=None)
-    causation_id: Optional[UUID] = field(default=None)
-    removal_reason: Optional[str] = field(default=None)
+    correlation_id: UUID | None = field(default=None)
+    causation_id: UUID | None = field(default=None)
+    removal_reason: str | None = field(default=None)
 
     def __post_init__(self) -> None:
         """Validate user role removed event."""
@@ -314,9 +319,9 @@ class UserPasswordChanged:
     changed_by: UUID = field()
     is_self_change: bool = field()
     event_version: int = field(default=1)
-    correlation_id: Optional[UUID] = field(default=None)
-    causation_id: Optional[UUID] = field(default=None)
-    password_strength_score: Optional[int] = field(default=None)
+    correlation_id: UUID | None = field(default=None)
+    causation_id: UUID | None = field(default=None)
+    password_strength_score: int | None = field(default=None)
 
     def __post_init__(self) -> None:
         """Validate user password changed event."""
@@ -373,9 +378,9 @@ class UserStatusChanged:
     new_status: UserStatus = field()
     changed_by: UUID = field()
     event_version: int = field(default=1)
-    correlation_id: Optional[UUID] = field(default=None)
-    causation_id: Optional[UUID] = field(default=None)
-    reason: Optional[str] = field(default=None)
+    correlation_id: UUID | None = field(default=None)
+    causation_id: UUID | None = field(default=None)
+    reason: str | None = field(default=None)
 
     def __post_init__(self) -> None:
         """Validate user status changed event."""

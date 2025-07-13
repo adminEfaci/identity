@@ -14,6 +14,7 @@ from ...domain.repositories import UserRepository
 from ...domain.services import UserDomainService
 from ...domain.value_objects import Email, Password, PersonName, UserId, Username
 from ...infrastructure.messaging import MessageBus
+from ...infrastructure.notifications import NotificationService
 from ..dtos import CreateUserDto, ModifyUserDto, UserDto
 from ..interfaces import IUserService
 
@@ -30,6 +31,7 @@ class UserService(IUserService):
         user_repository: UserRepository,
         user_domain_service: UserDomainService,
         message_bus: Optional[MessageBus] = None,
+        notification_service: Optional[NotificationService] = None,
     ) -> None:
         """Initialize the service with required dependencies.
 
@@ -37,10 +39,12 @@ class UserService(IUserService):
             user_repository: Repository for user persistence operations
             user_domain_service: Domain service for user business logic
             message_bus: Message bus for publishing domain events (optional)
+            notification_service: Notification service for sending notifications (optional)
         """
         self._user_repository = user_repository
         self._user_domain_service = user_domain_service
         self._message_bus = message_bus
+        self._notification_service = notification_service
 
     async def create_user(self, user_data: CreateUserDto) -> UserDto:
         """Create a new user.
@@ -96,6 +100,9 @@ class UserService(IUserService):
 
             # Publish UserCreated domain event
             await self._publish_user_created_event(user)
+
+            # Send user creation notifications
+            await self._send_user_created_notifications(user)
 
             return self._user_to_dto(user)
 
@@ -249,6 +256,9 @@ class UserService(IUserService):
                 # Publish UserModified domain event
                 await self._publish_user_modified_event(user, changes, previous_values)
 
+                # Send user modification notifications
+                await self._send_user_modified_notifications(user, changes, previous_values)
+
             return self._user_to_dto(user)
 
         except ValueError as e:
@@ -276,6 +286,9 @@ class UserService(IUserService):
 
             # Publish UserDeleted domain event
             await self._publish_user_deleted_event(user, user_email)
+
+            # Send user deletion notifications
+            await self._send_user_deleted_notifications(user, user_email)
 
         except ValueError as e:
             raise ValidationError(f"Invalid user ID: {str(e)}") from e
@@ -397,3 +410,117 @@ class UserService(IUserService):
             import logging
             logger = logging.getLogger(__name__)
             logger.error(f"Failed to publish UserDeleted event: {e}")
+
+    async def _send_user_created_notifications(self, user: User) -> None:
+        """Send notifications for user creation.
+
+        Args:
+            user: The created user entity
+        """
+        if not self._notification_service:
+            return
+
+        try:
+            # Create UserCreated domain event for notification service
+            from datetime import datetime
+
+            event = UserCreated(
+                event_id=uuid4(),
+                aggregate_id=user.id.value,
+                occurred_at=datetime.utcnow(),
+                user_id=user.id,
+                email=user.email,
+                status=user.status,
+                created_by=user.id.value,
+                correlation_id=uuid4(),
+            )
+
+            # Handle domain event through notification service
+            await self._notification_service.handle_domain_event(event)
+
+            # Also send via message bus for async processing
+            if self._message_bus:
+                await self._message_bus.send_user_welcome_email(
+                    user_id=str(user.id.value),
+                    email=str(user.email.value),
+                    first_name=str(user.first_name.value),
+                    last_name=str(user.last_name.value),
+                    username=str(user.username.value),
+                )
+
+        except Exception as e:
+            # Log error but don't fail the user creation
+            import logging
+            logger = logging.getLogger(__name__)
+            logger.error(f"Failed to send user created notifications: {e}")
+
+    async def _send_user_modified_notifications(
+        self, user: User, changes: dict, previous_values: dict
+    ) -> None:
+        """Send notifications for user modification.
+
+        Args:
+            user: The modified user entity
+            changes: Dictionary of changed fields
+            previous_values: Dictionary of previous values
+        """
+        if not self._notification_service:
+            return
+
+        try:
+            # Create UserModified domain event for notification service
+            from datetime import datetime
+
+            event = UserModified(
+                event_id=uuid4(),
+                aggregate_id=user.id.value,
+                occurred_at=datetime.utcnow(),
+                user_id=user.id,
+                modified_by=user.id.value,  # For now, assume self-modification
+                changes=changes,
+                previous_values=previous_values,
+                correlation_id=uuid4(),
+            )
+
+            # Handle domain event through notification service
+            await self._notification_service.handle_domain_event(event)
+
+        except Exception as e:
+            # Log error but don't fail the user modification
+            import logging
+            logger = logging.getLogger(__name__)
+            logger.error(f"Failed to send user modified notifications: {e}")
+
+    async def _send_user_deleted_notifications(self, user: User, user_email: Email) -> None:
+        """Send notifications for user deletion.
+
+        Args:
+            user: The deleted user entity
+            user_email: Email of the deleted user
+        """
+        if not self._notification_service:
+            return
+
+        try:
+            # Create UserDeleted domain event for notification service
+            from datetime import datetime
+
+            event = UserDeleted(
+                event_id=uuid4(),
+                aggregate_id=user.id.value,
+                occurred_at=datetime.utcnow(),
+                user_id=user.id,
+                deleted_by=user.id.value,  # For now, assume self-deletion
+                email=user_email,
+                soft_delete=True,  # Assuming soft delete by default
+                correlation_id=uuid4(),
+            )
+
+            # Handle domain event through notification service
+            await self._notification_service.handle_domain_event(event)
+
+        except Exception as e:
+            # Log error but don't fail the user deletion
+            import logging
+            logger = logging.getLogger(__name__)
+            logger.error(f"Failed to send user deleted notifications: {e}")
