@@ -230,3 +230,30 @@ def require_roles(required_roles: list[str]) -> Callable:
         return user
 
     return check_roles
+
+
+def require_admin(request: Request) -> dict[str, Any]:
+    """Require admin role.
+
+    Args:
+        request: HTTP request
+
+    Returns:
+        User information dictionary
+
+    Raises:
+        HTTPException: If user is not an admin
+    """
+    return require_roles(["admin"])(request)
+
+
+def get_current_user_optional(request: Request) -> Optional[dict[str, Any]]:
+    """Get current user if authenticated, otherwise return None.
+
+    Args:
+        request: HTTP request
+
+    Returns:
+        User information dictionary or None
+    """
+    return get_current_user(request)

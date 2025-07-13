@@ -1,6 +1,6 @@
-# Identity Domain Module
+# Identity Module Backend
 
-A comprehensive Identity Domain implementation following Domain-Driven Design (DDD) principles.
+A comprehensive identity management system with Multi-Factor Authentication (MFA), Role-Based Access Control (RBAC), auditing, and notification capabilities, following Domain-Driven Design (DDD) principles.
 
 ## Overview
 

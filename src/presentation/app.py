@@ -22,6 +22,14 @@ from .rest.mfa import router as mfa_router
 from .rest.rbac import router as rbac_router
 from .rest.user_management import router as user_management_router
 from .rest.users import router as users_router
+from .rest.auth import router as auth_router
+from .rest.public import router as public_router
+from .rest.admin import (
+    dashboard_router,
+    users_router as admin_users_router,
+    audit_router,
+    system_router,
+)
 
 logger = logging.getLogger(__name__)
 
@@ -118,10 +126,21 @@ def create_app(
     app.dependency_overrides[get_user_service] = get_user_service_override
 
     # Include REST API routes
+    # Public routes (no auth required)
+    app.include_router(public_router)
+    app.include_router(auth_router)
+    
+    # Protected routes
     app.include_router(users_router)
     app.include_router(mfa_router)
     app.include_router(rbac_router)
     app.include_router(user_management_router)
+    
+    # Admin routes
+    app.include_router(dashboard_router)
+    app.include_router(admin_users_router)
+    app.include_router(audit_router)
+    app.include_router(system_router)
 
     # Create GraphQL router with context
     async def get_context(request: Request) -> GraphQLContext:

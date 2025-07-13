@@ -13,8 +13,10 @@ from sqlalchemy import pool
 from sqlalchemy.engine import Connection
 from sqlalchemy.ext.asyncio import async_engine_from_config
 
-from infrastructure.config import DatabaseConfig
-from infrastructure.database import Base
+from src.infrastructure.config import DatabaseConfig
+from src.infrastructure.database import Base
+# Import all models to ensure they're registered with Base.metadata
+from src.infrastructure.models import *
 
 # Alembic Config object
 config = context.config
