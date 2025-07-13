@@ -6,7 +6,7 @@ queries, mutations, and subscriptions with user context and timing information.
 
 import logging
 import time
-from typing import Any, Dict, Optional
+from typing import Any, Optional
 from uuid import uuid4
 
 from strawberry.extensions import SchemaExtension
@@ -20,7 +20,7 @@ logger = logging.getLogger(__name__)
 
 class GraphQLAuditExtension(SchemaExtension):
     """GraphQL Audit Extension for Strawberry GraphQL.
-    
+
     Captures GraphQL operations for audit logging including user context,
     operation details, and timing information.
     """
@@ -31,7 +31,7 @@ class GraphQLAuditExtension(SchemaExtension):
         audit_config: AuditConfig,
     ) -> None:
         """Initialize GraphQL audit extension.
-        
+
         Args:
             message_bus: Message bus for publishing audit events
             audit_config: Audit configuration settings
@@ -66,7 +66,7 @@ class GraphQLAuditExtension(SchemaExtension):
 
 class GraphQLAuditProcessor:
     """Processor for handling GraphQL audit events.
-    
+
     This class provides methods to capture and process GraphQL operations
     for audit logging purposes.
     """
@@ -77,7 +77,7 @@ class GraphQLAuditProcessor:
         audit_config: AuditConfig,
     ) -> None:
         """Initialize GraphQL audit processor.
-        
+
         Args:
             message_bus: Message bus for publishing audit events
             audit_config: Audit configuration settings
@@ -93,10 +93,10 @@ class GraphQLAuditProcessor:
         operation_name: Optional[str] = None,
         operation_type: str = "query",
         query: Optional[str] = None,
-        variables: Optional[Dict[str, Any]] = None,
+        variables: Optional[dict[str, Any]] = None,
     ) -> None:
         """Process a GraphQL operation for audit logging.
-        
+
         Args:
             info: GraphQL resolver info
             result: GraphQL execution result
@@ -181,12 +181,12 @@ class GraphQLAuditProcessor:
         except Exception as e:
             logger.error(f"Error processing GraphQL audit event: {e}")
 
-    def _extract_user_info(self, info: Info) -> Dict[str, Optional[str]]:
+    def _extract_user_info(self, info: Info) -> dict[str, Optional[str]]:
         """Extract user information from GraphQL context.
-        
+
         Args:
             info: GraphQL resolver info
-            
+
         Returns:
             Dictionary containing user information
         """
@@ -206,12 +206,12 @@ class GraphQLAuditProcessor:
 
         return user_info
 
-    def _extract_client_info(self, info: Info) -> Dict[str, Optional[str]]:
+    def _extract_client_info(self, info: Info) -> dict[str, Optional[str]]:
         """Extract client information from GraphQL context.
-        
+
         Args:
             info: GraphQL resolver info
-            
+
         Returns:
             Dictionary containing client information
         """
@@ -230,10 +230,10 @@ class GraphQLAuditProcessor:
 
     def _get_client_ip(self, request: Any) -> Optional[str]:
         """Extract client IP address from request headers.
-        
+
         Args:
             request: HTTP request object
-            
+
         Returns:
             Client IP address or None if not found
         """
@@ -260,10 +260,10 @@ class GraphQLAuditProcessor:
 
     def _sanitize_data(self, data: Any) -> Any:
         """Sanitize data by masking sensitive fields.
-        
+
         Args:
             data: Data to sanitize
-            
+
         Returns:
             Sanitized data with sensitive fields masked
         """
@@ -287,11 +287,11 @@ class GraphQLAuditProcessor:
 
     def _truncate_string(self, text: str, max_length: int) -> str:
         """Truncate a string to a maximum length.
-        
+
         Args:
             text: Text to truncate
             max_length: Maximum allowed length
-            
+
         Returns:
             Truncated text
         """
@@ -310,10 +310,10 @@ async def audit_graphql_query(
     start_time: float,
     operation_name: Optional[str] = None,
     query: Optional[str] = None,
-    variables: Optional[Dict[str, Any]] = None,
+    variables: Optional[dict[str, Any]] = None,
 ) -> None:
     """Audit a GraphQL query operation.
-    
+
     Args:
         info: GraphQL resolver info
         result: GraphQL execution result
@@ -341,10 +341,10 @@ async def audit_graphql_mutation(
     start_time: float,
     operation_name: Optional[str] = None,
     query: Optional[str] = None,
-    variables: Optional[Dict[str, Any]] = None,
+    variables: Optional[dict[str, Any]] = None,
 ) -> None:
     """Audit a GraphQL mutation operation.
-    
+
     Args:
         info: GraphQL resolver info
         result: GraphQL execution result
@@ -372,10 +372,10 @@ async def audit_graphql_subscription(
     start_time: float,
     operation_name: Optional[str] = None,
     query: Optional[str] = None,
-    variables: Optional[Dict[str, Any]] = None,
+    variables: Optional[dict[str, Any]] = None,
 ) -> None:
     """Audit a GraphQL subscription operation.
-    
+
     Args:
         info: GraphQL resolver info
         result: GraphQL execution result

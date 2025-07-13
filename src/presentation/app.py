@@ -25,13 +25,13 @@ logger = logging.getLogger(__name__)
 
 class GraphQLContext:
     """GraphQL context class for dependency injection.
-    
+
     Provides access to services and user information in GraphQL resolvers.
     """
 
     def __init__(self, request: Request, user_service: IUserService) -> None:
         """Initialize GraphQL context.
-        
+
         Args:
             request: HTTP request
             user_service: User service instance
@@ -44,12 +44,12 @@ class GraphQLContext:
 @asynccontextmanager
 async def lifespan(app: FastAPI) -> AsyncGenerator[None, None]:
     """Application lifespan manager.
-    
+
     Handles startup and shutdown events for the FastAPI application.
-    
+
     Args:
         app: FastAPI application instance
-        
+
     Yields:
         None during application runtime
     """
@@ -72,12 +72,12 @@ def create_app(
     debug: bool = False,
 ) -> FastAPI:
     """Create and configure the FastAPI application.
-    
+
     Args:
         user_service: User service instance
         security_config: Security configuration
         debug: Whether to enable debug mode
-        
+
     Returns:
         Configured FastAPI application
     """
@@ -133,7 +133,7 @@ def create_app(
     @app.get("/health")
     async def health_check() -> dict[str, str]:
         """Health check endpoint.
-        
+
         Returns:
             Health status information
         """
@@ -143,11 +143,11 @@ def create_app(
     @app.exception_handler(Exception)
     async def global_exception_handler(request: Request, exc: Exception) -> JSONResponse:
         """Global exception handler for unhandled errors.
-        
+
         Args:
             request: HTTP request
             exc: Unhandled exception
-            
+
         Returns:
             JSON error response
         """
@@ -174,7 +174,7 @@ def run_app(
     debug: bool = False,
 ) -> None:
     """Run the FastAPI application with Uvicorn.
-    
+
     Args:
         user_service: User service instance
         security_config: Security configuration

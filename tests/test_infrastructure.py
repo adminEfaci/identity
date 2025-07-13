@@ -4,12 +4,17 @@ This module contains comprehensive tests for all infrastructure components
 including repositories, cache, messaging, and security features.
 """
 
-import asyncio
-import pytest
-import pytest_asyncio
 from unittest.mock import AsyncMock, Mock, patch
 from uuid import uuid4
 
+import pytest
+
+from domain.entities import Permission, Role, User
+from domain.enums import PermissionScope, RoleType
+from domain.value_objects import (
+    Email,
+    PasswordHash,
+)
 from infrastructure.cache import CacheService, RedisCache
 from infrastructure.config import (
     CeleryConfig,
@@ -18,7 +23,6 @@ from infrastructure.config import (
     RedisConfig,
     SecurityConfig,
 )
-from infrastructure.database import DatabaseManager, SessionManager
 from infrastructure.messaging import CeleryMessageBus
 from infrastructure.repositories import (
     SqlAlchemyPermissionRepository,
@@ -28,18 +32,8 @@ from infrastructure.repositories import (
 from infrastructure.security import (
     Argon2PasswordHasher,
     JWTTokenService,
+    SecurityError,
     SecurityService,
-)
-
-from domain.entities import Permission, Role, User
-from domain.enums import PermissionScope, RoleType, UserStatus
-from domain.value_objects import (
-    AuditInfo,
-    Email,
-    PasswordHash,
-    PermissionId,
-    RoleId,
-    UserId,
 )
 
 
@@ -49,7 +43,7 @@ class TestDatabaseConfig:
     def test_database_config_defaults(self):
         """Test database configuration with default values."""
         config = DatabaseConfig()
-        
+
         assert config.host == "localhost"
         assert config.port == 5432
         assert config.username == "identity"
@@ -66,7 +60,7 @@ class TestDatabaseConfig:
             password="testpass",
             database="testdb",
         )
-        
+
         expected_url = "postgresql+asyncpg://testuser:testpass@testhost:5433/testdb"
         assert config.url == expected_url
 
@@ -77,7 +71,7 @@ class TestRedisConfig:
     def test_redis_config_defaults(self):
         """Test Redis configuration with default values."""
         config = RedisConfig()
-        
+
         assert config.host == "localhost"
         assert config.port == 6379
         assert config.database == 0
@@ -92,14 +86,14 @@ class TestRedisConfig:
             password="testpass",
             database=1,
         )
-        
+
         expected_url = "redis://:testpass@testhost:6380/1"
         assert config.url == expected_url
 
     def test_redis_url_without_password(self):
         """Test Redis URL generation without password."""
         config = RedisConfig(host="testhost", port=6380, database=1)
-        
+
         expected_url = "redis://testhost:6380/1"
         assert config.url == expected_url
 
@@ -110,7 +104,7 @@ class TestSecurityConfig:
     def test_security_config_defaults(self):
         """Test security configuration with default values."""
         config = SecurityConfig()
-        
+
         assert config.jwt_algorithm == "HS256"
         assert config.jwt_access_token_expire_minutes == 30
         assert config.jwt_refresh_token_expire_days == 7
@@ -143,9 +137,9 @@ class TestRedisCache:
         with patch("redis.asyncio.from_url") as mock_redis:
             mock_redis_instance = AsyncMock()
             mock_redis.return_value = mock_redis_instance
-            
+
             await redis_cache.initialize()
-            
+
             mock_redis.assert_called_once()
             mock_redis_instance.ping.assert_called_once()
 
@@ -156,14 +150,14 @@ class TestRedisCache:
             mock_redis.return_value = mock_redis_instance
             mock_redis_instance.get.return_value = '"test_value"'
             mock_redis_instance.setex.return_value = True
-            
+
             await redis_cache.initialize()
-            
+
             # Test set operation
             result = await redis_cache.set("test_key", "test_value", 300)
             assert result is True
             mock_redis_instance.setex.assert_called_once()
-            
+
             # Test get operation
             value = await redis_cache.get("test_key")
             assert value == "test_value"
@@ -175,9 +169,9 @@ class TestRedisCache:
             mock_redis_instance = AsyncMock()
             mock_redis.return_value = mock_redis_instance
             mock_redis_instance.delete.return_value = 1
-            
+
             await redis_cache.initialize()
-            
+
             result = await redis_cache.delete("test_key")
             assert result is True
             mock_redis_instance.delete.assert_called_once()
@@ -189,17 +183,17 @@ class TestRedisCache:
             mock_redis.return_value = mock_redis_instance
             mock_redis_instance.get.return_value = None
             mock_redis_instance.setex.return_value = True
-            
+
             await redis_cache.initialize()
             cache_service = CacheService(redis_cache)
-            
+
             user_id = str(uuid4())
             user_data = {"id": user_id, "email": "test@example.com"}
-            
+
             # Test cache user
             result = await cache_service.cache_user_by_id(user_id, user_data)
             assert result is True
-            
+
             # Test get user (cache miss)
             cached_user = await cache_service.get_user_by_id(user_id)
             assert cached_user is None
@@ -221,9 +215,9 @@ class TestArgon2PasswordHasher:
     def test_password_hashing(self, password_hasher):
         """Test password hashing."""
         password = "test_password_123"
-        
+
         password_hash = password_hasher.hash_password(password)
-        
+
         assert password_hash.algorithm == "argon2"
         assert password_hash.hash_value
         assert len(password_hash.hash_value) > 50  # Argon2 hashes are long
@@ -232,7 +226,7 @@ class TestArgon2PasswordHasher:
         """Test successful password verification."""
         password = "test_password_123"
         password_hash = password_hasher.hash_password(password)
-        
+
         result = password_hasher.verify_password(password, password_hash)
         assert result is True
 
@@ -241,18 +235,18 @@ class TestArgon2PasswordHasher:
         password = "test_password_123"
         wrong_password = "wrong_password"
         password_hash = password_hasher.hash_password(password)
-        
+
         result = password_hasher.verify_password(wrong_password, password_hash)
         assert result is False
 
     def test_password_too_short(self, password_hasher):
         """Test password too short error."""
-        with pytest.raises(Exception):  # Should raise SecurityError
+        with pytest.raises(SecurityError):
             password_hasher.hash_password("short")
 
     def test_empty_password(self, password_hasher):
         """Test empty password error."""
-        with pytest.raises(Exception):  # Should raise SecurityError
+        with pytest.raises(SecurityError):
             password_hasher.hash_password("")
 
 
@@ -274,9 +268,9 @@ class TestJWTTokenService:
         user_id = str(uuid4())
         email = "test@example.com"
         roles = ["user", "admin"]
-        
+
         token = token_service.generate_access_token(user_id, email, roles)
-        
+
         assert token
         assert isinstance(token, str)
         assert len(token) > 100  # JWT tokens are long
@@ -284,9 +278,9 @@ class TestJWTTokenService:
     def test_refresh_token_generation(self, token_service):
         """Test refresh token generation."""
         user_id = str(uuid4())
-        
+
         token = token_service.generate_refresh_token(user_id)
-        
+
         assert token
         assert isinstance(token, str)
 
@@ -295,10 +289,10 @@ class TestJWTTokenService:
         user_id = str(uuid4())
         email = "test@example.com"
         roles = ["user"]
-        
+
         token = token_service.generate_access_token(user_id, email, roles)
         claims = token_service.validate_token(token)
-        
+
         assert claims["sub"] == user_id
         assert claims["email"] == email
         assert claims["roles"] == roles
@@ -309,19 +303,19 @@ class TestJWTTokenService:
         user_id = str(uuid4())
         email = "test@example.com"
         roles = ["user"]
-        
+
         token = token_service.generate_access_token(user_id, email, roles)
-        
+
         # Token should be valid initially
         claims = token_service.validate_token(token)
         assert claims["sub"] == user_id
-        
+
         # Revoke token
         result = token_service.revoke_token(token)
         assert result is True
-        
+
         # Token should be invalid after revocation
-        with pytest.raises(Exception):  # Should raise SecurityError
+        with pytest.raises(SecurityError):
             token_service.validate_token(token)
 
 
@@ -353,9 +347,9 @@ class TestSecurityService:
         user_id = str(uuid4())
         email = "test@example.com"
         roles = ["user"]
-        
+
         tokens = security_service.generate_tokens(user_id, email, roles)
-        
+
         assert "access_token" in tokens
         assert "refresh_token" in tokens
         assert tokens["access_token"]
@@ -366,10 +360,10 @@ class TestSecurityService:
         user_id = str(uuid4())
         email = "test@example.com"
         roles = ["user"]
-        
+
         tokens = security_service.generate_tokens(user_id, email, roles)
         claims = security_service.validate_access_token(tokens["access_token"])
-        
+
         assert claims["sub"] == user_id
         assert claims["email"] == email
         assert claims["type"] == "access"
@@ -380,7 +374,7 @@ class TestSecurityService:
         strong_result = security_service.validate_password_strength("StrongPass123!")
         assert strong_result["is_valid"] is True
         assert strong_result["score"] >= 4
-        
+
         # Weak password
         weak_result = security_service.validate_password_strength("weak")
         assert weak_result["is_valid"] is False
@@ -391,9 +385,9 @@ class TestSecurityService:
         user_id = str(uuid4())
         email = "test@example.com"
         roles = ["user"]
-        
+
         tokens = security_service.generate_tokens(user_id, email, roles)
-        
+
         result = security_service.logout_user(
             tokens["access_token"], tokens["refresh_token"]
         )
@@ -418,9 +412,9 @@ class TestCeleryMessageBus:
         with patch("celery.Celery") as mock_celery:
             mock_celery_instance = Mock()
             mock_celery.return_value = mock_celery_instance
-            
+
             message_bus.initialize()
-            
+
             mock_celery.assert_called_once_with("identity_module")
             mock_celery_instance.conf.update.assert_called_once()
 
@@ -433,13 +427,13 @@ class TestCeleryMessageBus:
             mock_task = Mock()
             mock_task.id = "test_task_id"
             mock_celery_instance.send_task.return_value = mock_task
-            
+
             message_bus.initialize()
-            
+
             task_id = await message_bus.schedule_task(
                 "test.task", args=("arg1", "arg2"), kwargs={"key": "value"}
             )
-            
+
             assert task_id == "test_task_id"
             mock_celery_instance.send_task.assert_called_once()
 
@@ -452,13 +446,13 @@ class TestCeleryMessageBus:
             mock_task = Mock()
             mock_task.id = "email_task_id"
             mock_celery_instance.send_task.return_value = mock_task
-            
+
             message_bus.initialize()
-            
+
             task_id = await message_bus.send_email_notification(
                 "test@example.com", "Test Subject", "Test Body"
             )
-            
+
             assert task_id == "email_task_id"
 
 
@@ -518,32 +512,32 @@ class TestSqlAlchemyRepositories:
     async def test_user_repository_save(self, user_repository, sample_user, mock_session):
         """Test user repository save operation."""
         mock_session.get.return_value = None  # User doesn't exist
-        
+
         await user_repository.save(sample_user)
-        
+
         mock_session.add.assert_called_once()
         mock_session.flush.assert_called_once()
 
     async def test_user_repository_find_by_email(self, user_repository, mock_session):
         """Test user repository find by email."""
         email = Email("test@example.com")
-        
+
         # Mock the query result
         mock_result = AsyncMock()
         mock_result.scalar_one_or_none.return_value = None
         mock_session.execute.return_value = mock_result
-        
+
         user = await user_repository.find_by_email(email)
-        
+
         assert user is None
         mock_session.execute.assert_called_once()
 
     async def test_role_repository_save(self, role_repository, sample_role, mock_session):
         """Test role repository save operation."""
         mock_session.get.return_value = None  # Role doesn't exist
-        
+
         await role_repository.save(sample_role)
-        
+
         mock_session.add.assert_called_once()
         mock_session.flush.assert_called_once()
 
@@ -552,9 +546,9 @@ class TestSqlAlchemyRepositories:
     ):
         """Test permission repository save operation."""
         mock_session.get.return_value = None  # Permission doesn't exist
-        
+
         await permission_repository.save(sample_permission)
-        
+
         mock_session.add.assert_called_once()
         mock_session.flush.assert_called_once()
 
@@ -565,7 +559,7 @@ class TestInfrastructureConfig:
     def test_infrastructure_config_creation(self):
         """Test infrastructure configuration creation."""
         config = InfrastructureConfig()
-        
+
         assert isinstance(config.database, DatabaseConfig)
         assert isinstance(config.redis, RedisConfig)
         assert isinstance(config.celery, CeleryConfig)

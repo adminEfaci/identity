@@ -12,7 +12,7 @@ from ...domain.exceptions import (
 )
 from ...domain.repositories import UserRepository
 from ...domain.services import UserDomainService
-from ...domain.value_objects import Email, PasswordHash, UserId
+from ...domain.value_objects import Email, Password, PersonName, UserId, Username
 from ...infrastructure.messaging import MessageBus
 from ..dtos import CreateUserDto, ModifyUserDto, UserDto
 from ..interfaces import IUserService

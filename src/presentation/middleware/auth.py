@@ -18,14 +18,14 @@ logger = logging.getLogger(__name__)
 
 class JWTAuthMiddleware(BaseHTTPMiddleware):
     """JWT Authentication Middleware for FastAPI applications.
-    
+
     Validates JWT tokens and adds user information to request state
     for both REST and GraphQL endpoints.
     """
 
     def __init__(self, app: Any, token_service: JWTTokenService) -> None:
         """Initialize JWT authentication middleware.
-        
+
         Args:
             app: FastAPI application instance
             token_service: JWT token service for validation
@@ -35,11 +35,11 @@ class JWTAuthMiddleware(BaseHTTPMiddleware):
 
     async def dispatch(self, request: Request, call_next: Callable) -> Any:
         """Process request with JWT authentication.
-        
+
         Args:
             request: HTTP request
             call_next: Next middleware in chain
-            
+
         Returns:
             HTTP response
         """
@@ -71,10 +71,10 @@ class JWTAuthMiddleware(BaseHTTPMiddleware):
 
     def _should_skip_auth(self, path: str) -> bool:
         """Check if authentication should be skipped for a path.
-        
+
         Args:
             path: Request path
-            
+
         Returns:
             True if authentication should be skipped
         """
@@ -90,10 +90,10 @@ class JWTAuthMiddleware(BaseHTTPMiddleware):
 
     def _extract_token(self, request: Request) -> Optional[str]:
         """Extract JWT token from request headers.
-        
+
         Args:
             request: HTTP request
-            
+
         Returns:
             JWT token string or None if not found
         """
@@ -108,14 +108,14 @@ class JWTAuthMiddleware(BaseHTTPMiddleware):
 
 class JWTBearer(HTTPBearer):
     """JWT Bearer token dependency for FastAPI endpoints.
-    
+
     Provides JWT token validation as a FastAPI dependency that can be
     used to protect individual endpoints.
     """
 
     def __init__(self, token_service: JWTTokenService, auto_error: bool = True) -> None:
         """Initialize JWT Bearer dependency.
-        
+
         Args:
             token_service: JWT token service for validation
             auto_error: Whether to automatically raise HTTP exceptions
@@ -130,15 +130,15 @@ def validate_jwt_token(
     auto_error: bool = True,
 ) -> Optional[dict[str, Any]]:
     """Validate JWT token and return claims.
-    
+
     Args:
         token_service: JWT token service
         credentials: HTTP authorization credentials
         auto_error: Whether to raise exceptions on errors
-        
+
     Returns:
         JWT token claims or None if not authenticated
-        
+
     Raises:
         HTTPException: If token is invalid and auto_error is True
     """
@@ -169,10 +169,10 @@ def validate_jwt_token(
 
 def get_current_user(request: Request) -> Optional[dict[str, Any]]:
     """Get current authenticated user from request state.
-    
+
     Args:
         request: HTTP request with user state
-        
+
     Returns:
         User information dictionary or None if not authenticated
     """
@@ -188,13 +188,13 @@ def get_current_user(request: Request) -> Optional[dict[str, Any]]:
 
 def require_auth(request: Request) -> dict[str, Any]:
     """Require authentication and return user information.
-    
+
     Args:
         request: HTTP request
-        
+
     Returns:
         User information dictionary
-        
+
     Raises:
         HTTPException: If user is not authenticated
     """
@@ -210,10 +210,10 @@ def require_auth(request: Request) -> dict[str, Any]:
 
 def require_roles(required_roles: list[str]) -> Callable:
     """Create a dependency that requires specific roles.
-    
+
     Args:
         required_roles: List of required roles
-        
+
     Returns:
         Dependency function that validates roles
     """

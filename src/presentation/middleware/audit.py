@@ -22,7 +22,7 @@ logger = logging.getLogger(__name__)
 
 class HTTPAuditMiddleware(BaseHTTPMiddleware):
     """HTTP Audit Middleware for FastAPI applications.
-    
+
     Captures HTTP requests and responses for audit logging including
     user context, request/response data, and timing information.
     """
@@ -34,7 +34,7 @@ class HTTPAuditMiddleware(BaseHTTPMiddleware):
         audit_config: AuditConfig,
     ) -> None:
         """Initialize HTTP audit middleware.
-        
+
         Args:
             app: FastAPI application instance
             message_bus: Message bus for publishing audit events
@@ -46,11 +46,11 @@ class HTTPAuditMiddleware(BaseHTTPMiddleware):
 
     async def dispatch(self, request: Request, call_next: Callable) -> Response:
         """Process request with audit logging.
-        
+
         Args:
             request: HTTP request
             call_next: Next middleware in chain
-            
+
         Returns:
             HTTP response
         """
@@ -117,11 +117,11 @@ class HTTPAuditMiddleware(BaseHTTPMiddleware):
 
     async def _capture_request_info(self, request: Request, correlation_id: str) -> dict[str, Any]:
         """Capture relevant request information for audit logging.
-        
+
         Args:
             request: HTTP request
             correlation_id: Correlation ID for this request
-            
+
         Returns:
             Dictionary containing request information
         """
@@ -174,10 +174,10 @@ class HTTPAuditMiddleware(BaseHTTPMiddleware):
 
     async def _capture_response_info(self, response: Response) -> dict[str, Any]:
         """Capture relevant response information for audit logging.
-        
+
         Args:
             response: HTTP response
-            
+
         Returns:
             Dictionary containing response information
         """
@@ -230,7 +230,7 @@ class HTTPAuditMiddleware(BaseHTTPMiddleware):
         error: Optional[str] = None,
     ) -> None:
         """Publish audit event to message bus.
-        
+
         Args:
             request_info: Request information
             response_info: Response information
@@ -269,10 +269,10 @@ class HTTPAuditMiddleware(BaseHTTPMiddleware):
 
     def _sanitize_data(self, data: Any) -> Any:
         """Sanitize data by masking sensitive fields.
-        
+
         Args:
             data: Data to sanitize
-            
+
         Returns:
             Sanitized data with sensitive fields masked
         """
@@ -296,10 +296,10 @@ class HTTPAuditMiddleware(BaseHTTPMiddleware):
 
     def _get_client_ip(self, request: Request) -> Optional[str]:
         """Extract client IP address from request headers.
-        
+
         Args:
             request: HTTP request
-            
+
         Returns:
             Client IP address or None if not found
         """

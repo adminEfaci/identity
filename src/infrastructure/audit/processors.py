@@ -19,7 +19,7 @@ logger = logging.getLogger(__name__)
 
 class AuditEventProcessor(ABC):
     """Abstract interface for audit event processing.
-    
+
     Defines the contract for processing different types of audit events
     and storing them appropriately.
     """
@@ -34,14 +34,14 @@ class AuditEventProcessor(ABC):
         user_agent: Optional[str] = None,
     ) -> bool:
         """Process a domain event for audit logging.
-        
+
         Args:
             domain_event: The domain event to process
             user_id: ID of the user associated with this event
             session_id: Session ID associated with this event
             ip_address: IP address of the client
             user_agent: User agent of the client
-            
+
         Returns:
             True if the event was processed successfully, False otherwise
         """
@@ -64,7 +64,7 @@ class AuditEventProcessor(ABC):
         correlation_id: Optional[UUID] = None,
     ) -> bool:
         """Process an API request for audit logging.
-        
+
         Args:
             method: HTTP method (GET, POST, etc.)
             path: Request path
@@ -78,7 +78,7 @@ class AuditEventProcessor(ABC):
             response_data: Response payload data
             duration_ms: Request duration in milliseconds
             correlation_id: Correlation ID for tracing
-            
+
         Returns:
             True if the event was processed successfully, False otherwise
         """
@@ -101,7 +101,7 @@ class AuditEventProcessor(ABC):
         correlation_id: Optional[UUID] = None,
     ) -> bool:
         """Process a GraphQL operation for audit logging.
-        
+
         Args:
             operation_name: Name of the GraphQL operation
             operation_type: Type of operation (query, mutation, subscription)
@@ -115,7 +115,7 @@ class AuditEventProcessor(ABC):
             errors: GraphQL errors if any
             duration_ms: Operation duration in milliseconds
             correlation_id: Correlation ID for tracing
-            
+
         Returns:
             True if the event was processed successfully, False otherwise
         """
@@ -124,7 +124,7 @@ class AuditEventProcessor(ABC):
 
 class DefaultAuditEventProcessor(AuditEventProcessor):
     """Default implementation of audit event processor.
-    
+
     This processor handles the standard audit event processing workflow
     including data sanitization, event creation, and storage.
     """
@@ -135,7 +135,7 @@ class DefaultAuditEventProcessor(AuditEventProcessor):
         config: AuditConfig,
     ) -> None:
         """Initialize the audit event processor.
-        
+
         Args:
             event_store: Store for persisting audit events
             config: Audit configuration settings
@@ -152,14 +152,14 @@ class DefaultAuditEventProcessor(AuditEventProcessor):
         user_agent: Optional[str] = None,
     ) -> bool:
         """Process a domain event for audit logging.
-        
+
         Args:
             domain_event: The domain event to process
             user_id: ID of the user associated with this event
             session_id: Session ID associated with this event
             ip_address: IP address of the client
             user_agent: User agent of the client
-            
+
         Returns:
             True if the event was processed successfully, False otherwise
         """
@@ -211,7 +211,7 @@ class DefaultAuditEventProcessor(AuditEventProcessor):
         correlation_id: Optional[UUID] = None,
     ) -> bool:
         """Process an API request for audit logging.
-        
+
         Args:
             method: HTTP method (GET, POST, etc.)
             path: Request path
@@ -225,7 +225,7 @@ class DefaultAuditEventProcessor(AuditEventProcessor):
             response_data: Response payload data
             duration_ms: Request duration in milliseconds
             correlation_id: Correlation ID for tracing
-            
+
         Returns:
             True if the event was processed successfully, False otherwise
         """
@@ -296,7 +296,7 @@ class DefaultAuditEventProcessor(AuditEventProcessor):
         correlation_id: Optional[UUID] = None,
     ) -> bool:
         """Process a GraphQL operation for audit logging.
-        
+
         Args:
             operation_name: Name of the GraphQL operation
             operation_type: Type of operation (query, mutation, subscription)
@@ -310,7 +310,7 @@ class DefaultAuditEventProcessor(AuditEventProcessor):
             errors: GraphQL errors if any
             duration_ms: Operation duration in milliseconds
             correlation_id: Correlation ID for tracing
-            
+
         Returns:
             True if the event was processed successfully, False otherwise
         """
@@ -359,10 +359,10 @@ class DefaultAuditEventProcessor(AuditEventProcessor):
 
     def _sanitize_data(self, data: Any) -> Any:
         """Sanitize data by masking sensitive fields.
-        
+
         Args:
             data: Data to sanitize
-            
+
         Returns:
             Sanitized data with sensitive fields masked
         """
@@ -386,10 +386,10 @@ class DefaultAuditEventProcessor(AuditEventProcessor):
 
     def _truncate_payload(self, data: Optional[dict[str, Any]]) -> Optional[dict[str, Any]]:
         """Truncate payload data if it exceeds the maximum size.
-        
+
         Args:
             data: Payload data to check
-            
+
         Returns:
             Truncated payload data or None if input was None
         """
@@ -419,11 +419,11 @@ class DefaultAuditEventProcessor(AuditEventProcessor):
 
     def _truncate_string(self, text: str, max_length: int) -> str:
         """Truncate a string to a maximum length.
-        
+
         Args:
             text: Text to truncate
             max_length: Maximum allowed length
-            
+
         Returns:
             Truncated text
         """
@@ -434,7 +434,7 @@ class DefaultAuditEventProcessor(AuditEventProcessor):
 
     async def cleanup_expired_events(self) -> int:
         """Clean up expired audit events based on retention policy.
-        
+
         Returns:
             Number of events cleaned up
         """

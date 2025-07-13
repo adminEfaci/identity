@@ -19,7 +19,7 @@ logger = logging.getLogger(__name__)
 @dataclass(frozen=True)
 class AuditEvent:
     """Base audit event for all audit logging.
-    
+
     This represents a processed audit event that can be stored
     and retrieved from the audit event store.
     """
@@ -67,7 +67,7 @@ class AuditEvent:
 
     def to_dict(self) -> dict[str, Any]:
         """Convert audit event to dictionary representation.
-        
+
         Returns:
             Dictionary representation of the audit event
         """
@@ -93,14 +93,14 @@ class AuditEvent:
         user_agent: Optional[str] = None,
     ) -> "AuditEvent":
         """Create audit event from domain event.
-        
+
         Args:
             domain_event: The domain event to convert
             user_id: ID of the user associated with this event
             session_id: Session ID associated with this event
             ip_address: IP address of the client
             user_agent: User agent of the client
-            
+
         Returns:
             Audit event representing the domain event
         """
@@ -141,7 +141,7 @@ class AuditEvent:
         correlation_id: Optional[UUID] = None,
     ) -> "AuditEvent":
         """Create audit event from API request.
-        
+
         Args:
             method: HTTP method (GET, POST, etc.)
             path: Request path
@@ -155,7 +155,7 @@ class AuditEvent:
             response_data: Response payload data
             duration_ms: Request duration in milliseconds
             correlation_id: Correlation ID for tracing
-            
+
         Returns:
             Audit event representing the API request
         """
@@ -197,7 +197,7 @@ class AuditEvent:
         correlation_id: Optional[UUID] = None,
     ) -> "AuditEvent":
         """Create audit event from GraphQL operation.
-        
+
         Args:
             operation_name: Name of the GraphQL operation
             operation_type: Type of operation (query, mutation, subscription)
@@ -211,7 +211,7 @@ class AuditEvent:
             errors: GraphQL errors if any
             duration_ms: Operation duration in milliseconds
             correlation_id: Correlation ID for tracing
-            
+
         Returns:
             Audit event representing the GraphQL operation
         """
@@ -239,7 +239,7 @@ class AuditEvent:
 
 class AuditEventStore(ABC):
     """Abstract interface for audit event storage.
-    
+
     Defines the contract for storing and retrieving audit events
     from persistent storage.
     """
@@ -247,10 +247,10 @@ class AuditEventStore(ABC):
     @abstractmethod
     async def store_event(self, event: AuditEvent) -> bool:
         """Store an audit event.
-        
+
         Args:
             event: The audit event to store
-            
+
         Returns:
             True if the event was stored successfully, False otherwise
         """
@@ -259,10 +259,10 @@ class AuditEventStore(ABC):
     @abstractmethod
     async def store_events(self, events: list[AuditEvent]) -> int:
         """Store multiple audit events in a batch.
-        
+
         Args:
             events: List of audit events to store
-            
+
         Returns:
             Number of events successfully stored
         """
@@ -271,10 +271,10 @@ class AuditEventStore(ABC):
     @abstractmethod
     async def get_event(self, event_id: UUID) -> Optional[AuditEvent]:
         """Retrieve an audit event by ID.
-        
+
         Args:
             event_id: ID of the event to retrieve
-            
+
         Returns:
             The audit event if found, None otherwise
         """
@@ -290,14 +290,14 @@ class AuditEventStore(ABC):
         end_time: Optional[datetime] = None,
     ) -> list[AuditEvent]:
         """Retrieve audit events for a specific user.
-        
+
         Args:
             user_id: ID of the user
             limit: Maximum number of events to return
             offset: Number of events to skip
             start_time: Start of time range filter
             end_time: End of time range filter
-            
+
         Returns:
             List of audit events for the user
         """
@@ -308,10 +308,10 @@ class AuditEventStore(ABC):
         self, correlation_id: UUID
     ) -> list[AuditEvent]:
         """Retrieve audit events by correlation ID.
-        
+
         Args:
             correlation_id: Correlation ID to search for
-            
+
         Returns:
             List of audit events with the given correlation ID
         """
@@ -320,10 +320,10 @@ class AuditEventStore(ABC):
     @abstractmethod
     async def delete_events_older_than(self, cutoff_time: datetime) -> int:
         """Delete audit events older than the specified time.
-        
+
         Args:
             cutoff_time: Events older than this time will be deleted
-            
+
         Returns:
             Number of events deleted
         """
@@ -332,7 +332,7 @@ class AuditEventStore(ABC):
 
 class InMemoryAuditEventStore(AuditEventStore):
     """In-memory implementation of audit event store.
-    
+
     This implementation stores audit events in memory and is suitable
     for testing and development environments. Events are not persisted
     across application restarts.
@@ -346,10 +346,10 @@ class InMemoryAuditEventStore(AuditEventStore):
 
     async def store_event(self, event: AuditEvent) -> bool:
         """Store an audit event in memory.
-        
+
         Args:
             event: The audit event to store
-            
+
         Returns:
             True if the event was stored successfully
         """
@@ -377,10 +377,10 @@ class InMemoryAuditEventStore(AuditEventStore):
 
     async def store_events(self, events: list[AuditEvent]) -> int:
         """Store multiple audit events in memory.
-        
+
         Args:
             events: List of audit events to store
-            
+
         Returns:
             Number of events successfully stored
         """
@@ -392,10 +392,10 @@ class InMemoryAuditEventStore(AuditEventStore):
 
     async def get_event(self, event_id: UUID) -> Optional[AuditEvent]:
         """Retrieve an audit event by ID.
-        
+
         Args:
             event_id: ID of the event to retrieve
-            
+
         Returns:
             The audit event if found, None otherwise
         """
@@ -410,14 +410,14 @@ class InMemoryAuditEventStore(AuditEventStore):
         end_time: Optional[datetime] = None,
     ) -> list[AuditEvent]:
         """Retrieve audit events for a specific user.
-        
+
         Args:
             user_id: ID of the user
             limit: Maximum number of events to return
             offset: Number of events to skip
             start_time: Start of time range filter
             end_time: End of time range filter
-            
+
         Returns:
             List of audit events for the user
         """
@@ -444,10 +444,10 @@ class InMemoryAuditEventStore(AuditEventStore):
         self, correlation_id: UUID
     ) -> list[AuditEvent]:
         """Retrieve audit events by correlation ID.
-        
+
         Args:
             correlation_id: Correlation ID to search for
-            
+
         Returns:
             List of audit events with the given correlation ID
         """
@@ -457,10 +457,10 @@ class InMemoryAuditEventStore(AuditEventStore):
 
     async def delete_events_older_than(self, cutoff_time: datetime) -> int:
         """Delete audit events older than the specified time.
-        
+
         Args:
             cutoff_time: Events older than this time will be deleted
-            
+
         Returns:
             Number of events deleted
         """
@@ -498,7 +498,7 @@ class InMemoryAuditEventStore(AuditEventStore):
 
     def get_total_events(self) -> int:
         """Get the total number of stored events.
-        
+
         Returns:
             Total number of events in storage
         """

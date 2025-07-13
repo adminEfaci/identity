@@ -14,7 +14,7 @@ logger = logging.getLogger(__name__)
 @dataclass(frozen=True)
 class AuditConfig:
     """Configuration for audit event processing and storage.
-    
+
     This configuration controls how audit events are processed, stored,
     and retained within the identity module.
     """
@@ -129,7 +129,7 @@ class AuditConfig:
     @classmethod
     def create_default(cls) -> "AuditConfig":
         """Create default audit configuration.
-        
+
         Returns:
             Default audit configuration with recommended settings
         """
@@ -138,7 +138,7 @@ class AuditConfig:
     @classmethod
     def create_minimal(cls) -> "AuditConfig":
         """Create minimal audit configuration for development.
-        
+
         Returns:
             Minimal audit configuration with reduced functionality
         """
@@ -153,7 +153,7 @@ class AuditConfig:
     @classmethod
     def create_production(cls) -> "AuditConfig":
         """Create production audit configuration.
-        
+
         Returns:
             Production audit configuration with full functionality
         """
@@ -172,10 +172,10 @@ class AuditConfig:
 
     def is_path_excluded(self, path: str) -> bool:
         """Check if a request path should be excluded from audit logging.
-        
+
         Args:
             path: HTTP request path
-            
+
         Returns:
             True if the path should be excluded from audit logging
         """
@@ -197,10 +197,10 @@ class AuditConfig:
 
     def should_mask_field(self, field_name: str) -> bool:
         """Check if a field should be masked for security reasons.
-        
+
         Args:
             field_name: Name of the field to check
-            
+
         Returns:
             True if the field should be masked
         """
