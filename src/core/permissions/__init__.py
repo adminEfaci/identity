@@ -116,10 +116,7 @@ class Role(BaseModel):
         Returns:
             True if role has permission
         """
-        for permission in self.permissions:
-            if permission.resource == resource and permission.level == level:
-                return True
-        return False
+        return any(permission.resource == resource and permission.level == level for permission in self.permissions)
 
 
 class RBACManager:
