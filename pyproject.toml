@@ -39,6 +39,10 @@ dependencies = [
     "argon2-cffi>=23.0.0",
     "pyjwt[crypto]>=2.8.0",
     "cryptography>=41.0.0",
+    # Presentation Layer
+    "fastapi>=0.104.0",
+    "strawberry-graphql[fastapi]>=0.215.0",
+    "uvicorn[standard]>=0.24.0",
     # Utilities
     "pydantic>=2.5.0",
     "pydantic-settings>=2.1.0",

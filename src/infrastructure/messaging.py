@@ -156,12 +156,15 @@ class CeleryMessageBus(MessageBus):
                 "identity.events.*": {"queue": "identity_events"},
                 "identity.notifications.*": {"queue": "identity_notifications"},
                 "identity.background.*": {"queue": "identity_background"},
+                "identity.audit.*": {"queue": "identity_audit"},
             },
             # Queue definitions
             task_queues=(
                 Queue("identity_events", routing_key="identity.events"),
                 Queue("identity_notifications", routing_key="identity.notifications"),
                 Queue("identity_background", routing_key="identity.background"),
+                Queue("identity_audit", routing_key="identity.audit"),
+                Queue("identity_audit_dlq", routing_key="identity.audit.dlq"),
             ),
             # Error handling
             task_reject_on_worker_lost=True,
@@ -290,6 +293,198 @@ class CeleryMessageBus(MessageBus):
                 }
             except Exception as e:
                 logger.error(f"Failed to update user statistics: {e}")
+                return {
+                    "status": "error",
+                    "error": str(e),
+                }
+
+        @self._celery_app.task(name="identity.audit.process_domain_event")
+        def process_audit_domain_event(
+            event_data: dict[str, Any],
+            user_id: Optional[str] = None,
+            session_id: Optional[str] = None,
+            ip_address: Optional[str] = None,
+            user_agent: Optional[str] = None,
+        ) -> dict[str, Any]:
+            """Process a domain event for audit logging.
+
+            Args:
+                event_data: Serialized domain event data
+                user_id: ID of the user associated with this event
+                session_id: Session ID associated with this event
+                ip_address: IP address of the client
+                user_agent: User agent of the client
+
+            Returns:
+                Processing result
+            """
+            try:
+                logger.info(f"Processing audit for domain event: {event_data.get('event_type')}")
+
+                # This would be injected via dependency injection in a real implementation
+                # For now, we'll just log the audit event
+                # In production, this would:
+                # 1. Get the audit processor from DI container
+                # 2. Reconstruct the domain event from event_data
+                # 3. Process it through the audit processor
+
+                return {
+                    "status": "success",
+                    "event_id": event_data.get("event_id"),
+                    "processed_at": event_data.get("occurred_at"),
+                    "audit_type": "domain_event",
+                }
+            except Exception as e:
+                logger.error(f"Failed to process audit for domain event: {e}")
+                return {
+                    "status": "error",
+                    "error": str(e),
+                    "event_id": event_data.get("event_id"),
+                }
+
+        @self._celery_app.task(name="identity.audit.process_api_request")
+        def process_audit_api_request(
+            method: str,
+            path: str,
+            status_code: int,
+            occurred_at: str,
+            user_id: Optional[str] = None,
+            session_id: Optional[str] = None,
+            ip_address: Optional[str] = None,
+            user_agent: Optional[str] = None,
+            request_data: Optional[dict[str, Any]] = None,
+            response_data: Optional[dict[str, Any]] = None,
+            duration_ms: Optional[float] = None,
+            correlation_id: Optional[str] = None,
+        ) -> dict[str, Any]:
+            """Process an API request for audit logging.
+
+            Args:
+                method: HTTP method
+                path: Request path
+                status_code: HTTP status code
+                occurred_at: When the request occurred (ISO format)
+                user_id: ID of the authenticated user
+                session_id: Session ID
+                ip_address: Client IP address
+                user_agent: Client user agent
+                request_data: Request payload data
+                response_data: Response payload data
+                duration_ms: Request duration in milliseconds
+                correlation_id: Correlation ID for tracing
+
+            Returns:
+                Processing result
+            """
+            try:
+                logger.info(f"Processing audit for API request: {method} {path}")
+
+                # This would be injected via dependency injection in a real implementation
+                # For now, we'll just log the audit event
+                # In production, this would:
+                # 1. Get the audit processor from DI container
+                # 2. Process the API request audit event
+
+                return {
+                    "status": "success",
+                    "method": method,
+                    "path": path,
+                    "status_code": status_code,
+                    "processed_at": occurred_at,
+                    "audit_type": "api_request",
+                }
+            except Exception as e:
+                logger.error(f"Failed to process audit for API request: {e}")
+                return {
+                    "status": "error",
+                    "error": str(e),
+                    "method": method,
+                    "path": path,
+                }
+
+        @self._celery_app.task(name="identity.audit.process_graphql_operation")
+        def process_audit_graphql_operation(
+            operation_name: Optional[str],
+            operation_type: str,
+            query: str,
+            variables: Optional[dict[str, Any]],
+            occurred_at: str,
+            user_id: Optional[str] = None,
+            session_id: Optional[str] = None,
+            ip_address: Optional[str] = None,
+            user_agent: Optional[str] = None,
+            errors: Optional[list[dict[str, Any]]] = None,
+            duration_ms: Optional[float] = None,
+            correlation_id: Optional[str] = None,
+        ) -> dict[str, Any]:
+            """Process a GraphQL operation for audit logging.
+
+            Args:
+                operation_name: Name of the GraphQL operation
+                operation_type: Type of operation (query, mutation, subscription)
+                query: GraphQL query string
+                variables: GraphQL variables
+                occurred_at: When the operation occurred (ISO format)
+                user_id: ID of the authenticated user
+                session_id: Session ID
+                ip_address: Client IP address
+                user_agent: Client user agent
+                errors: GraphQL errors if any
+                duration_ms: Operation duration in milliseconds
+                correlation_id: Correlation ID for tracing
+
+            Returns:
+                Processing result
+            """
+            try:
+                logger.info(f"Processing audit for GraphQL operation: {operation_type} {operation_name}")
+
+                # This would be injected via dependency injection in a real implementation
+                # For now, we'll just log the audit event
+                # In production, this would:
+                # 1. Get the audit processor from DI container
+                # 2. Process the GraphQL operation audit event
+
+                return {
+                    "status": "success",
+                    "operation_name": operation_name,
+                    "operation_type": operation_type,
+                    "processed_at": occurred_at,
+                    "audit_type": "graphql_operation",
+                }
+            except Exception as e:
+                logger.error(f"Failed to process audit for GraphQL operation: {e}")
+                return {
+                    "status": "error",
+                    "error": str(e),
+                    "operation_name": operation_name,
+                    "operation_type": operation_type,
+                }
+
+        @self._celery_app.task(name="identity.audit.cleanup_expired_events")
+        def cleanup_expired_audit_events() -> dict[str, Any]:
+            """Clean up expired audit events based on retention policy.
+
+            Returns:
+                Cleanup result
+            """
+            try:
+                logger.info("Starting expired audit events cleanup")
+
+                # This would be injected via dependency injection in a real implementation
+                # For now, we'll just log the cleanup
+                # In production, this would:
+                # 1. Get the audit processor from DI container
+                # 2. Run the cleanup process
+
+                cleaned_count = 0  # Placeholder
+
+                return {
+                    "status": "success",
+                    "cleaned_events": cleaned_count,
+                }
+            except Exception as e:
+                logger.error(f"Failed to cleanup expired audit events: {e}")
                 return {
                     "status": "error",
                     "error": str(e),
@@ -547,6 +742,162 @@ class CeleryMessageBus(MessageBus):
         """
         return await self.schedule_task(
             "identity.background.update_user_statistics",
+            countdown=delay,
+        )
+
+    # Audit event operations
+
+    async def publish_audit_domain_event(
+        self,
+        event: DomainEvent,
+        user_id: Optional[str] = None,
+        session_id: Optional[str] = None,
+        ip_address: Optional[str] = None,
+        user_agent: Optional[str] = None,
+        delay: Optional[int] = None,
+    ) -> Optional[str]:
+        """Publish domain event for audit processing.
+
+        Args:
+            event: Domain event to audit
+            user_id: ID of the user associated with this event
+            session_id: Session ID associated with this event
+            ip_address: IP address of the client
+            user_agent: User agent of the client
+            delay: Optional delay in seconds
+
+        Returns:
+            Task ID if scheduled successfully, None otherwise
+        """
+        return await self.schedule_task(
+            "identity.audit.process_domain_event",
+            args=(event.to_dict(), user_id, session_id, ip_address, user_agent),
+            countdown=delay,
+        )
+
+    async def publish_audit_api_request(
+        self,
+        method: str,
+        path: str,
+        status_code: int,
+        occurred_at: str,
+        user_id: Optional[str] = None,
+        session_id: Optional[str] = None,
+        ip_address: Optional[str] = None,
+        user_agent: Optional[str] = None,
+        request_data: Optional[dict[str, Any]] = None,
+        response_data: Optional[dict[str, Any]] = None,
+        duration_ms: Optional[float] = None,
+        correlation_id: Optional[str] = None,
+        delay: Optional[int] = None,
+    ) -> Optional[str]:
+        """Publish API request for audit processing.
+
+        Args:
+            method: HTTP method
+            path: Request path
+            status_code: HTTP status code
+            occurred_at: When the request occurred (ISO format)
+            user_id: ID of the authenticated user
+            session_id: Session ID
+            ip_address: Client IP address
+            user_agent: Client user agent
+            request_data: Request payload data
+            response_data: Response payload data
+            duration_ms: Request duration in milliseconds
+            correlation_id: Correlation ID for tracing
+            delay: Optional delay in seconds
+
+        Returns:
+            Task ID if scheduled successfully, None otherwise
+        """
+        return await self.schedule_task(
+            "identity.audit.process_api_request",
+            args=(
+                method,
+                path,
+                status_code,
+                occurred_at,
+                user_id,
+                session_id,
+                ip_address,
+                user_agent,
+                request_data,
+                response_data,
+                duration_ms,
+                correlation_id,
+            ),
+            countdown=delay,
+        )
+
+    async def publish_audit_graphql_operation(
+        self,
+        operation_name: Optional[str],
+        operation_type: str,
+        query: str,
+        variables: Optional[dict[str, Any]],
+        occurred_at: str,
+        user_id: Optional[str] = None,
+        session_id: Optional[str] = None,
+        ip_address: Optional[str] = None,
+        user_agent: Optional[str] = None,
+        errors: Optional[list[dict[str, Any]]] = None,
+        duration_ms: Optional[float] = None,
+        correlation_id: Optional[str] = None,
+        delay: Optional[int] = None,
+    ) -> Optional[str]:
+        """Publish GraphQL operation for audit processing.
+
+        Args:
+            operation_name: Name of the GraphQL operation
+            operation_type: Type of operation (query, mutation, subscription)
+            query: GraphQL query string
+            variables: GraphQL variables
+            occurred_at: When the operation occurred (ISO format)
+            user_id: ID of the authenticated user
+            session_id: Session ID
+            ip_address: Client IP address
+            user_agent: Client user agent
+            errors: GraphQL errors if any
+            duration_ms: Operation duration in milliseconds
+            correlation_id: Correlation ID for tracing
+            delay: Optional delay in seconds
+
+        Returns:
+            Task ID if scheduled successfully, None otherwise
+        """
+        return await self.schedule_task(
+            "identity.audit.process_graphql_operation",
+            args=(
+                operation_name,
+                operation_type,
+                query,
+                variables,
+                occurred_at,
+                user_id,
+                session_id,
+                ip_address,
+                user_agent,
+                errors,
+                duration_ms,
+                correlation_id,
+            ),
+            countdown=delay,
+        )
+
+    async def schedule_audit_cleanup(
+        self, delay: Optional[int] = None
+    ) -> Optional[str]:
+        """Schedule audit events cleanup.
+
+        Args:
+            delay: Optional delay in seconds
+
+        Returns:
+            Task ID if scheduled successfully, None otherwise
+        """
+        return await self.schedule_task(
+            "identity.audit.cleanup_expired_events",
             countdown=delay,
         )
 
