@@ -18,6 +18,9 @@ from ..infrastructure.config import SecurityConfig
 from ..infrastructure.security import JWTTokenService
 from .graphql.resolvers import schema
 from .middleware.auth import JWTAuthMiddleware, get_current_user
+from .rest.mfa import router as mfa_router
+from .rest.rbac import router as rbac_router
+from .rest.user_management import router as user_management_router
 from .rest.users import router as users_router
 
 logger = logging.getLogger(__name__)
@@ -83,8 +86,8 @@ def create_app(
     """
     # Create FastAPI app
     app = FastAPI(
-        title="Identity Module API",
-        description="REST and GraphQL API for user identity management",
+        title="Identity Module API with MFA & RBAC",
+        description="Comprehensive REST and GraphQL API for user identity management, Multi-Factor Authentication, and Role-Based Access Control",
         version="1.0.0",
         docs_url="/docs",
         redoc_url="/redoc",
@@ -116,6 +119,9 @@ def create_app(
 
     # Include REST API routes
     app.include_router(users_router)
+    app.include_router(mfa_router)
+    app.include_router(rbac_router)
+    app.include_router(user_management_router)
 
     # Create GraphQL router with context
     async def get_context(request: Request) -> GraphQLContext:
