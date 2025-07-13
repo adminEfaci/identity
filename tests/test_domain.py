@@ -4,32 +4,26 @@ This file demonstrates the usage of the domain components and provides
 basic test coverage for the core functionality.
 """
 
-import pytest
-from datetime import datetime
 from uuid import uuid4
 
+import pytest
+
 from domain import (
-    # Entities
-    User,
-    Role,
-    Permission,
-    # Value Objects
     Email,
     PasswordHash,
-    AuditInfo,
-    UserId,
-    RoleId,
+    Permission,
     PermissionId,
-    # Enums
-    UserStatus,
-    RoleType,
     PermissionScope,
+    Role,
+    RoleId,
+    RoleType,
+    # Entities
+    User,
     # Events
     UserCreated,
     UserModified,
-    # Exceptions
-    ValidationError,
-    InvalidEmailError,
+    # Enums
+    UserStatus,
 )
 
 
