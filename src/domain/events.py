@@ -330,7 +330,9 @@ class UserPasswordChanged:
         if self.aggregate_id != self.user_id.value:
             raise ValueError("Aggregate ID must match User ID")
 
-        if self.password_strength_score is not None and not (0 <= self.password_strength_score <= 100):
+        if self.password_strength_score is not None and not (
+            0 <= self.password_strength_score <= 100
+        ):
             raise ValueError("Password strength score must be between 0 and 100")
 
     @property
@@ -431,6 +433,11 @@ class UserStatusChanged:
 
 # Type alias for all domain events
 DomainEvent = (
-    UserCreated | UserModified | UserDeleted | UserRoleAssigned |
-    UserRoleRemoved | UserPasswordChanged | UserStatusChanged
+    UserCreated
+    | UserModified
+    | UserDeleted
+    | UserRoleAssigned
+    | UserRoleRemoved
+    | UserPasswordChanged
+    | UserStatusChanged
 )
