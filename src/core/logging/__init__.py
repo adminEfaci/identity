@@ -4,15 +4,15 @@ import json
 import logging
 import sys
 from datetime import datetime, timezone
-from typing import Any, Dict, Optional, Union
 from pathlib import Path
+from typing import Any, Optional, Union
 
 from pydantic import BaseModel, Field
 
 
 class LogRecord(BaseModel):
     """Structured log record model."""
-    
+
     timestamp: datetime = Field(default_factory=lambda: datetime.now(timezone.utc))
     level: str
     logger_name: str
@@ -25,12 +25,12 @@ class LogRecord(BaseModel):
     user_id: Optional[str] = None
     request_id: Optional[str] = None
     correlation_id: Optional[str] = None
-    extra: Dict[str, Any] = Field(default_factory=dict)
+    extra: dict[str, Any] = Field(default_factory=dict)
 
 
 class StructuredFormatter(logging.Formatter):
     """JSON formatter for structured logging."""
-    
+
     def format(self, record: logging.LogRecord) -> str:
         """Format log record as structured JSON."""
         log_data = LogRecord(
@@ -57,13 +57,13 @@ class StructuredFormatter(logging.Formatter):
                 }
             }
         )
-        
+
         return log_data.model_dump_json(exclude_none=True)
 
 
 class StructuredLogger:
     """Structured logger with JSON output and context management."""
-    
+
     def __init__(
         self,
         name: str,
@@ -72,7 +72,7 @@ class StructuredLogger:
         include_console: bool = True
     ):
         """Initialize structured logger.
-        
+
         Args:
             name: Logger name
             level: Logging level
@@ -81,25 +81,25 @@ class StructuredLogger:
         """
         self.logger = logging.getLogger(name)
         self.logger.setLevel(getattr(logging, level.upper()))
-        
+
         # Clear existing handlers
         self.logger.handlers.clear()
-        
+
         formatter = StructuredFormatter()
-        
+
         # Console handler
         if include_console:
             console_handler = logging.StreamHandler(sys.stdout)
             console_handler.setFormatter(formatter)
             self.logger.addHandler(console_handler)
-        
+
         # File handler
         if output_file:
             output_file.parent.mkdir(parents=True, exist_ok=True)
             file_handler = logging.FileHandler(output_file)
             file_handler.setFormatter(formatter)
             self.logger.addHandler(file_handler)
-    
+
     def _log_with_context(
         self,
         level: str,
@@ -110,15 +110,21 @@ class StructuredLogger:
         **kwargs: Any
     ) -> None:
         """Log message with context."""
+        # Filter out reserved keywords that might conflict
+        filtered_kwargs = {
+            k: v for k, v in kwargs.items()
+            if k not in {'level', 'message', 'user_id', 'request_id', 'correlation_id'}
+        }
+
         extra = {
             'user_id': user_id,
             'request_id': request_id,
             'correlation_id': correlation_id,
-            **kwargs
+            **filtered_kwargs
         }
-        
+
         getattr(self.logger, level.lower())(message, extra=extra)
-    
+
     def debug(
         self,
         message: str,
@@ -129,7 +135,7 @@ class StructuredLogger:
     ) -> None:
         """Log debug message."""
         self._log_with_context("DEBUG", message, user_id, request_id, correlation_id, **kwargs)
-    
+
     def info(
         self,
         message: str,
@@ -140,7 +146,7 @@ class StructuredLogger:
     ) -> None:
         """Log info message."""
         self._log_with_context("INFO", message, user_id, request_id, correlation_id, **kwargs)
-    
+
     def warning(
         self,
         message: str,
@@ -151,7 +157,7 @@ class StructuredLogger:
     ) -> None:
         """Log warning message."""
         self._log_with_context("WARNING", message, user_id, request_id, correlation_id, **kwargs)
-    
+
     def error(
         self,
         message: str,
@@ -165,7 +171,7 @@ class StructuredLogger:
         if exc_info:
             kwargs['exc_info'] = True
         self._log_with_context("ERROR", message, user_id, request_id, correlation_id, **kwargs)
-    
+
     def critical(
         self,
         message: str,
@@ -179,14 +185,14 @@ class StructuredLogger:
         if exc_info:
             kwargs['exc_info'] = True
         self._log_with_context("CRITICAL", message, user_id, request_id, correlation_id, **kwargs)
-    
+
     def log_security_event(
         self,
         event_type: str,
         user_id: Optional[str] = None,
         ip_address: Optional[str] = None,
         user_agent: Optional[str] = None,
-        details: Optional[Dict[str, Any]] = None
+        details: Optional[dict[str, Any]] = None
     ) -> None:
         """Log security-related events."""
         self.warning(
@@ -198,14 +204,14 @@ class StructuredLogger:
             security_event=True,
             **(details or {})
         )
-    
+
     def log_audit_event(
         self,
         action: str,
         resource: str,
         user_id: Optional[str] = None,
         result: str = "success",
-        details: Optional[Dict[str, Any]] = None
+        details: Optional[dict[str, Any]] = None
     ) -> None:
         """Log audit events."""
         self.info(
@@ -220,7 +226,7 @@ class StructuredLogger:
 
 
 # Global logger instances
-_loggers: Dict[str, StructuredLogger] = {}
+_loggers: dict[str, StructuredLogger] = {}
 
 
 def get_logger(
@@ -230,13 +236,13 @@ def get_logger(
     include_console: bool = True
 ) -> StructuredLogger:
     """Get or create a structured logger instance.
-    
+
     Args:
         name: Logger name
         level: Logging level
         output_file: Optional file output path
         include_console: Whether to include console output
-        
+
     Returns:
         StructuredLogger instance
     """
@@ -248,7 +254,7 @@ def get_logger(
             output_file=file_path,
             include_console=include_console
         )
-    
+
     return _loggers[name]
 
 
@@ -258,20 +264,20 @@ def configure_logging(
     include_console: bool = True
 ) -> None:
     """Configure global logging settings.
-    
+
     Args:
         level: Default logging level
         log_file: Optional log file path
         include_console: Whether to include console output
     """
     # Configure root logger
-    root_logger = get_logger(
+    get_logger(
         "identity",
         level=level,
         output_file=log_file,
         include_console=include_console
     )
-    
+
     # Set up application loggers
     get_logger("identity.auth", level=level, output_file=log_file, include_console=include_console)
     get_logger("identity.api", level=level, output_file=log_file, include_console=include_console)

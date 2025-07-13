@@ -39,6 +39,8 @@ dependencies = [
     "argon2-cffi>=23.0.0",
     "pyjwt[crypto]>=2.8.0",
     "cryptography>=41.0.0",
+    # MFA and QR Code
+    "qrcode[pil]>=7.4.0",
     # Presentation Layer
     "fastapi>=0.104.0",
     "strawberry-graphql[fastapi]>=0.215.0",
@@ -47,6 +49,7 @@ dependencies = [
     "pydantic>=2.5.0",
     "pydantic-settings>=2.1.0",
     "structlog>=23.2.0",
+    "jsonschema>=4.20.0",
 ]
 
 [project.optional-dependencies]
