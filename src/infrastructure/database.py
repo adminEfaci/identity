@@ -7,7 +7,7 @@ and database configuration for the Identity module.
 import logging
 from collections.abc import AsyncGenerator
 from contextlib import asynccontextmanager
-from typing import Optional
+from typing import Any, Optional
 
 from sqlalchemy.ext.asyncio import (
     AsyncEngine,
@@ -199,9 +199,9 @@ class SessionManager:
     async def execute_in_transaction(
         self,
         operation: callable,
-        *args,
-        **kwargs,
-    ) -> any:
+        *args: Any,
+        **kwargs: Any,
+    ) -> Any:
         """Execute an operation within a database transaction.
 
         Args:
