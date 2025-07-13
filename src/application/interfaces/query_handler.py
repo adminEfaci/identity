@@ -3,8 +3,8 @@
 from abc import ABC, abstractmethod
 from typing import Generic, TypeVar
 
-TQuery = TypeVar('TQuery')
-TResult = TypeVar('TResult')
+TQuery = TypeVar("TQuery")
+TResult = TypeVar("TResult")
 
 
 class IQueryHandler(ABC, Generic[TQuery, TResult]):

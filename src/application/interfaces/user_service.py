@@ -67,10 +67,7 @@ class IUserService(ABC):
 
     @abstractmethod
     async def list_users(
-        self,
-        is_active: Optional[bool] = None,
-        limit: int = 50,
-        offset: int = 0
+        self, is_active: Optional[bool] = None, limit: int = 50, offset: int = 0
     ) -> list[UserDto]:
         """List users with optional filtering and pagination.
 

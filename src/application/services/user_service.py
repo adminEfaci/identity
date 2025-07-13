@@ -23,9 +23,7 @@ class UserService(IUserService):
     """
 
     def __init__(
-        self,
-        user_repository: IUserRepository,
-        user_domain_service: UserDomainService
+        self, user_repository: IUserRepository, user_domain_service: UserDomainService
     ) -> None:
         """Initialize the service with required dependencies.
 
@@ -55,13 +53,17 @@ class UserService(IUserService):
                 Email(user_data.email)
             )
             if existing_user_by_email:
-                raise UserAlreadyExistsError(f"User with email {user_data.email} already exists")
+                raise UserAlreadyExistsError(
+                    f"User with email {user_data.email} already exists"
+                )
 
             existing_user_by_username = await self._user_repository.find_by_username(
                 Username(user_data.username)
             )
             if existing_user_by_username:
-                raise UserAlreadyExistsError(f"User with username {user_data.username} already exists")
+                raise UserAlreadyExistsError(
+                    f"User with username {user_data.username} already exists"
+                )
 
             # Create domain objects
             user_id = UserId.generate()
@@ -78,7 +80,7 @@ class UserService(IUserService):
                 username=username,
                 password=password,
                 first_name=first_name,
-                last_name=last_name
+                last_name=last_name,
             )
 
             # Save user
@@ -138,10 +140,7 @@ class UserService(IUserService):
             return None
 
     async def list_users(
-        self,
-        is_active: Optional[bool] = None,
-        limit: int = 50,
-        offset: int = 0
+        self, is_active: Optional[bool] = None, limit: int = 50, offset: int = 0
     ) -> list[UserDto]:
         """List users with optional filtering and pagination.
 
@@ -154,9 +153,7 @@ class UserService(IUserService):
             List of user DTOs
         """
         users = await self._user_repository.find_all(
-            is_active=is_active,
-            limit=limit,
-            offset=offset
+            is_active=is_active, limit=limit, offset=offset
         )
         return [self._user_to_dto(user) for user in users]
 
@@ -184,14 +181,22 @@ class UserService(IUserService):
 
             # Check for conflicts if email or username is being changed
             if user_data.email and user_data.email != user.email.value:
-                existing_user = await self._user_repository.find_by_email(Email(user_data.email))
+                existing_user = await self._user_repository.find_by_email(
+                    Email(user_data.email)
+                )
                 if existing_user and existing_user.id != user.id:
-                    raise UserAlreadyExistsError(f"User with email {user_data.email} already exists")
+                    raise UserAlreadyExistsError(
+                        f"User with email {user_data.email} already exists"
+                    )
 
             if user_data.username and user_data.username != user.username.value:
-                existing_user = await self._user_repository.find_by_username(Username(user_data.username))
+                existing_user = await self._user_repository.find_by_username(
+                    Username(user_data.username)
+                )
                 if existing_user and existing_user.id != user.id:
-                    raise UserAlreadyExistsError(f"User with username {user_data.username} already exists")
+                    raise UserAlreadyExistsError(
+                        f"User with username {user_data.username} already exists"
+                    )
 
             # Update user fields
             if user_data.email:
@@ -257,5 +262,5 @@ class UserService(IUserService):
             last_name=user.last_name.value,
             is_active=user.is_active,
             created_at=user.created_at,
-            updated_at=user.updated_at
+            updated_at=user.updated_at,
         )

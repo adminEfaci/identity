@@ -1,6 +1,5 @@
 """List Users Query Handler for the Identity module."""
 
-
 from ..dtos import UserDto
 from ..interfaces import IQueryHandler, IUserService
 from ..queries import ListUsersQuery
@@ -31,7 +30,5 @@ class ListUsersHandler(IQueryHandler[ListUsersQuery, list[UserDto]]):
             List of user DTOs matching the criteria
         """
         return await self._user_service.list_users(
-            is_active=query.is_active,
-            limit=query.limit,
-            offset=query.offset
+            is_active=query.is_active, limit=query.limit, offset=query.offset
         )

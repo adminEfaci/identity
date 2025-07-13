@@ -3,8 +3,8 @@
 from abc import ABC, abstractmethod
 from typing import Generic, TypeVar
 
-TCommand = TypeVar('TCommand')
-TResult = TypeVar('TResult')
+TCommand = TypeVar("TCommand")
+TResult = TypeVar("TResult")
 
 
 class ICommandHandler(ABC, Generic[TCommand, TResult]):

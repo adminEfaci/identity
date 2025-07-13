@@ -38,7 +38,7 @@ class CreateUserHandler(ICommandHandler[CreateUserCommand, UserDto]):
             username=command.username,
             first_name=command.first_name,
             last_name=command.last_name,
-            password=command.password
+            password=command.password,
         )
 
         return await self._user_service.create_user(user_data)

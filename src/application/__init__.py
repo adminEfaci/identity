@@ -55,26 +55,21 @@ __all__ = [
     "CreateUserCommand",
     "ModifyUserCommand",
     "DeleteUserCommand",
-
     # Queries
     "GetUserQuery",
     "ListUsersQuery",
-
     # DTOs
     "UserDto",
     "CreateUserDto",
     "ModifyUserDto",
-
     # Handlers
     "CreateUserHandler",
     "ModifyUserHandler",
     "DeleteUserHandler",
     "GetUserHandler",
     "ListUsersHandler",
-
     # Services
     "UserService",
-
     # Interfaces
     "ICommandHandler",
     "IQueryHandler",

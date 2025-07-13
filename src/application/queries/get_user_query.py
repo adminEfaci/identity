@@ -24,7 +24,8 @@ class GetUserQuery:
     def __post_init__(self) -> None:
         """Validate that exactly one identifier is provided."""
         provided_fields = sum(
-            1 for field in [self.user_id, self.email, self.username]
+            1
+            for field in [self.user_id, self.email, self.username]
             if field is not None
         )
 

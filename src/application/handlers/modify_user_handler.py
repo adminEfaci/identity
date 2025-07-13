@@ -39,7 +39,7 @@ class ModifyUserHandler(ICommandHandler[ModifyUserCommand, UserDto]):
             username=command.username,
             first_name=command.first_name,
             last_name=command.last_name,
-            is_active=command.is_active
+            is_active=command.is_active,
         )
 
         return await self._user_service.modify_user(command.user_id, user_data)
